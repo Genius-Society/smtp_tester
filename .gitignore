@@ -1,0 +1,3 @@
+test.*
+rename.sh
+*__pycache__*
