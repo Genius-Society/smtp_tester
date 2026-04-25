@@ -65,4 +65,4 @@ if __name__ == "__main__":
         outputs=gr.TextArea(label=_L("发送状态"), buttons=["copy"]),
         flagging_mode="never",
         title=_L("SMTP 测试"),
-    ).launch(css="#gradio-share-link-button-0 { display: none; }")
+    ).launch(css="#gradio-share-link-button-0 { display: none; }", ssr_mode=False)
