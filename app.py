@@ -1,6 +1,11 @@
+import os
 import requests
 import gradio as gr
-from utils import API_SMTP, EN_US
+
+EN_US = os.getenv("LANG") != "zh_CN.UTF-8"
+API_SMTP = os.getenv("smtpi")
+if not API_SMTP:
+    raise EnvironmentError("请检查环境变量 smtpi")
 
 ZH2EN = {
     "SMTP 在线测试工具": "SMTP online tester",
@@ -49,8 +54,8 @@ def infer(target, title, content, name, email, password, host, port):
         return f"{e}"
 
 
-if __name__ == "__main__":
-    gr.Interface(
+def main():
+    return gr.Interface(
         fn=infer,
         inputs=[
             gr.Textbox(label=_L("收信人邮箱"), placeholder="Recipient"),
@@ -65,4 +70,8 @@ if __name__ == "__main__":
         outputs=gr.TextArea(label=_L("发送状态"), buttons=["copy"]),
         flagging_mode="never",
         title=_L("SMTP 测试"),
-    ).launch(css="#gradio-share-link-button-0 { display: none; }", ssr_mode=False)
+    )
+
+
+if __name__ == "__main__":
+    main().launch(css="#gradio-share-link-button-0 { display: none; }", ssr_mode=False)
