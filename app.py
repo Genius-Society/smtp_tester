@@ -1,12 +1,10 @@
 import os
-import requests
+import smtplib
 import gradio as gr
+from email.header import Header
+from email.mime.text import MIMEText
 
 EN_US = os.getenv("LANG") != "zh_CN.UTF-8"
-API_SMTP = os.getenv("smtpi")
-if not API_SMTP:
-    raise EnvironmentError("请检查环境变量 smtpi")
-
 ZH2EN = {
     "SMTP 在线测试工具": "SMTP online tester",
     "测试昵称": "Test nickname",
@@ -29,29 +27,38 @@ def _L(zh_txt: str):
 
 
 def infer(target, title, content, name, email, password, host, port):
+    # 邮件内容
+    body = f"""
+    <html>
+        <body>
+            <h1>{title}</h1><br>
+            {content}
+        </body>
+    </html>
+    """
+    # 构建邮件
+    msg = MIMEText(body, "html", "utf-8")
+    msg["Subject"] = Header(name, "utf-8")
+    msg["From"] = email
+    msg["To"] = target
+    logs = None
     try:
-        response = requests.get(
-            API_SMTP,
-            params={
-                "host": host,
-                "Port": port,
-                "key": password,  # apikey
-                "email": email,  # from
-                "mail": target,  # to
-                "title": title,  # subject
-                "name": name,  # nickname
-                "text": content,  # content
-            },
-        )
-        if response.status_code == 200:
-            result: dict = response.json()
-            return result.get("status")
+        with smtplib.SMTP_SSL(host, port) as server:
+            server.login(email, password)
+            server.sendmail(email, [msg["To"]], msg.as_string())
 
+        logs = "邮件发送成功!"
+
+    except smtplib.SMTPResponseException as e:
+        if e.smtp_code == -1:
+            logs = "邮件发送成功!"
         else:
-            raise ConnectionError(f"{response.status_code}")
+            logs = f"邮件发送失败: {e}"
 
     except Exception as e:
-        return f"{e}"
+        logs = f"邮件系统故障: {e}"
+
+    return logs
 
 
 def main():
